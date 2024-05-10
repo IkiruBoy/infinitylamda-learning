@@ -1,0 +1,225 @@
+sudo apt install -y curl wget apt-transport-https
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+sudo install minikube-linux-amd64 /usr/local/bin/minikube
+curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
+chmod +x kubectl
+sudo mv kubectl /usr/local/bin/
+minikube start --driver=docker --cpus=2 --memory=2g
+
+ikiru@MACHINE:~/infinitylamda-learning/k8s$ kubectl get services --all-namespaces
+NAMESPACE     NAME         TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)                  AGE
+default       kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP                  22h
+kube-system   kube-dns     ClusterIP   10.96.0.10   <none>        53/UDP,53/TCP,9153/TCP   22h
+
+kubectl describe services kubernetes
+Name:              kubernetes
+Namespace:         default
+Labels:            component=apiserver
+                   provider=kubernetes
+Annotations:       <none>
+Selector:          <none>
+Type:              ClusterIP
+IP Family Policy:  SingleStack
+IP Families:       IPv4
+IP:                10.96.0.1
+IPs:               10.96.0.1
+Port:              https  443/TCP
+TargetPort:        8443/TCP
+Endpoints:         192.168.49.2:8443
+Session Affinity:  None
+Events:            <none>
+
+ kubectl get pods --all-namespaces
+NAMESPACE     NAME                               READY   STATUS    RESTARTS       AGE
+kube-system   coredns-7db6d8ff4d-jnz8v           1/1     Running   2 (20h ago)    42h
+kube-system   etcd-minikube                      1/1     Running   2 (20h ago)    42h
+kube-system   kube-apiserver-minikube            1/1     Running   2 (20h ago)    42h
+kube-system   kube-controller-manager-minikube   1/1     Running   2 (20h ago)    42h
+kube-system   kube-proxy-b4x8k                   1/1     Running   2 (20h ago)    42h
+kube-system   kube-scheduler-minikube            1/1     Running   2 (20h ago)    42h
+kube-system   storage-provisioner                1/1     Running   4 (107s ago)   42h
+
+ kubectl describe pod etcd-minikube --namespace=kube-system
+
+ kubectl create deployment my-nginx --image=nginx:stable
+ kubectl get deployments.apps my-nginx
+ kubectl get pods
+ kubectl expose deployment my-nginx --name=my-nginx-svc --type=NodePort --port=80
+ kubectl get svc my-nginx-svc
+ kubectl port-forward my-nginx-584c7f8568-qpfvv 8000:80
+ 
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod
+  labels:
+    app: nginx
+spec:
+  containers:
+  - name: nginxii
+    image: nginx:stable
+    ports:
+    - containerPort: 80
+
+kubectl apply -f ngnix-pod.yaml -n default
+kubectl get pods
+NAME                        READY   STATUS    RESTARTS   AGE
+my-nginx-584c7f8568-qpfvv   1/1     Running   0          23m
+nginx-pod                   1/1     Running   0          21s
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ubuntu-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ubuntu-app
+  template:
+    metadata:
+      labels:
+        app: ubuntu-app
+    spec:
+      containers:
+      - name: ubuntu-container
+        image: ubuntu
+        command: ["tail"]
+        args: ["-f", "/dev/null"]
+        resources:
+           requests:
+             memory: "64Mi"
+             cpu: "250m"
+           limits:
+             memory: "128Mi"
+             cpu: "500m"
+
+
+kubectl apply -f ubuntu-loop.yaml -n default
+kubectl describe deployments
+
+Name:                   ubuntu-deployment
+Namespace:              default
+CreationTimestamp:      Mon, 29 Apr 2024 13:16:55 +0300
+Labels:                 <none>
+Annotations:            deployment.kubernetes.io/revision: 1
+Selector:               app=ubuntu-app
+Replicas:               1 desired | 1 updated | 1 total | 1 available | 0 unavailable
+StrategyType:           RollingUpdate
+MinReadySeconds:        0
+RollingUpdateStrategy:  25% max unavailable, 25% max surge
+Pod Template:
+  Labels:  app=ubuntu-app
+  Containers:
+   ubuntu-container:
+    Image:      ubuntu
+    Port:       <none>
+    Host Port:  <none>
+    Command:
+      tail
+    Args:
+      -f
+      /dev/null
+    Limits:
+      cpu:     500m
+      memory:  128Mi
+    Requests:
+      cpu:         250m
+      memory:      64Mi
+    Environment:   <none>
+    Mounts:        <none>
+  Volumes:         <none>
+  Node-Selectors:  <none>
+  Tolerations:     <none>
+Conditions:
+  Type           Status  Reason
+  ----           ------  ------
+  Available      True    MinimumReplicasAvailable
+  Progressing    True    NewReplicaSetAvailable
+OldReplicaSets:  <none>
+NewReplicaSet:   ubuntu-deployment-5d4d4799c (1/1 replicas created)
+Events:
+  Type    Reason             Age   From                   Message
+  ----    ------             ----  ----                   -------
+  Normal  ScalingReplicaSet  14m   deployment-controller  Scaled up replica set ubuntu-deployment-5d4d4799c to 1
+
+kubectl scale deployment/ubuntu-deployment --replicas=2
+deployment.apps/ubuntu-deployment scaled
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ubuntu-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ubuntu-app
+  template:
+    metadata:
+      labels:
+        app: ubuntu-app
+    spec:
+      containers:
+      - name: ubuntu-container
+        image: ubuntu
+        command: ["tail"]
+        args: ["-f", "/dev/null"]
+        resources:
+           requests:
+             memory: "64Mi"
+             cpu: "250m"
+           limits:
+             memory: "128Mi"
+             cpu: "500m"
+
+kubectl apply -f ubuntu-loop.yaml -n default
+kubectl get deployment
+kubectl delete deployment my-nginx
+kubectl delete deployment ubuntu-deployment
+
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: date-printer
+spec:
+  schedule: "* * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: date-printer
+            image: busybox:1.28
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -c
+            - date; echo Yeah!
+          restartPolicy: OnFailure
+
+kubectl apply -f CronJob.yaml -n default
+cronjob.batch/date-printer configured
+ikiru@MACHINE:~/infinitylamda-learning/k8s$ kubectl get cronjob date-printer
+NAME           SCHEDULE    TIMEZONE   SUSPEND   ACTIVE   LAST SCHEDULE   AGE
+date-printer   * * * * *   <none>     False     0        5m51s           61m
+ikiru@MACHINE:~/infinitylamda-learning/k8s$ kubectl get jobs --watch
+NAME                    STATUS     COMPLETIONS   DURATION   AGE
+date-printer-28573261   Complete   1/1           7s         6m7s
+date-printer-28573267   Complete   1/1           6s         7s
+$ kubectl get jobs --watch
+NAME                    STATUS     COMPLETIONS   DURATION   AGE
+date-printer-28573261   Complete   1/1           7s         6m39s
+date-printer-28573267   Complete   1/1           6s         39s
+ 
+$ pods=$(kubectl get pods --selector=job-name=date-printer-28573267 --output=jsonpath
+={.items[*].metadata.name})
+
+$ kubectl logs $pods
+Mon Apr 29 13:07:02 UTC 2024
+Yeah!
+
+kubectl delete cronjob date-printer
+
+

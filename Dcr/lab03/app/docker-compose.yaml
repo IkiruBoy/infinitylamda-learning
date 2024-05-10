@@ -1,0 +1,29 @@
+version: '3.9'
+services:
+  app:
+    image: 'todo:ex01'
+    container_name: todo_app
+    environment:
+      - MYSQL_HOST=db
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=password123
+      - MYSQL_DB=todoapp
+    ports:
+      - '3000:3000'
+    depends_on:
+      - db
+    networks:
+      - todo-app
+  db:
+    image: 'mysql:8.0'
+    environment:
+      - MYSQL_ROOT_PASSWORD=password123
+      - MYSQL_DATABASE=todoapp
+    volumes:
+      - './todo-mysql-db:/var/lib/mysql'
+    networks:
+      - todo-app
+
+networks:
+  todo-app:
+ 

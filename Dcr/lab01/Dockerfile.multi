@@ -1,0 +1,21 @@
+FROM alpine:3.19 AS build
+
+WORKDIR /app
+
+COPY myapp.zip .
+
+RUN apk add nodejs npm python3 zip
+
+RUN unzip myapp.zip
+RUN rm -rf myapp.zip
+RUN npm ci
+RUN npm run build
+
+FROM alpine:3.19 AS builder
+
+RUN apk add --no-cache python3
+
+WORKDIR /app/public
+COPY --from=build /app/public .
+EXPOSE 3000
+CMD ["python3", "-m", "http.server", "8000"]

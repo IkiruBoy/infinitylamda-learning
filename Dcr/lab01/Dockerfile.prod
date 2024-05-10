@@ -1,0 +1,23 @@
+ARG ALPINE_VERSION=3.19
+
+FROM alpine:${ALPINE_VERSION}
+
+ENV PYTHONUNBUFFERED=1=value
+EXPOSE 8080
+
+
+USER root
+
+RUN mkdir /web_app
+COPY index.html /web_app 
+
+RUN apk update && \
+    apk add python3
+
+RUN addgroup myapp && \
+    adduser -D -H -G  myapp myapp
+
+WORKDIR /web_app
+
+ENTRYPOINT ["python3", "-m", "http.server", "8000"]
+CMD []

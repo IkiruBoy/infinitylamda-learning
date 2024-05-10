@@ -1,0 +1,40 @@
+Exercise 01: Use Volume mounts
+
+	mkdir todo-app
+	docker run -p 3000:3000 -v todo-app:/etc/todos todo:ex01
+	docker ps -a
+	docker rm ff7
+	docker run -p 3000:3000 -v todo-app:/etc/todos todo:ex01
+	docker ps -a
+	docker rm 9ed
+	rm -r todo-app
+
+Exercise 02: Multi Container Application
+	mkdir todo-mysql-db
+	docker network create todo-app
+	docker run -d --name mysql --network todo-app -v todo-mysql-db:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=password123 -e MYSQL_DATABASE=todoapp mysql:8.0
+	docker run --name todo_app -p 3000:3000 --network todo-app -e MYSQL_HOST=60830ef99329 -e MYSQL_USER=root -e MYSQL_PASSWORD=password123 -e MYSQL_DB=todoapp todo:ex01	
+	docker ps -a
+	docker stop 608
+	docker rm f06 608
+	docker run -d --name mysql --network todo-app -v todo-mysql-db:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=password123 -e MYSQL_DATABASE=todoapp mysql:8.0	
+	docker run --name todo_app -p 3000:3000 --network todo-app -e MYSQL_HOST=b429ab08da1a -e MYSQL_USER=root -e MYSQL_PASSWORD=password123 -e MYSQL_DB=todoapp todo:ex01
+	
+Exercise 03: Use registries
+	docker pull registry
+	docker run -d -p 5050:5000 --name local-registry -v registry-data:/var/lib/registry registry
+	docker tag todo:ex01 localhost:5050/todo:ex01
+	docker push localhost:5050/todo:ex01
+	The push refers to repository [localhost:5050/todo]
+7d458ec3eb48: Pushed 
+dc2dd972e88f: Pushed 
+8ea4abe4b6ab: Pushed 
+bf83ef464e6d: Pushed 
+05783ac4ef3c: Pushed 
+926b35a05f1d: Pushed 
+d4fc045c9e3a: Pushed 
+ex01: digest: sha256:e41132869a284fb7a604a37dbd36288231c3cfbc361b39b483be1105ba1661ef size: 1787
+
+
+
+
